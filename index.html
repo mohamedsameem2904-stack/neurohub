@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neuro-Hub | Clinical Study Sanctuary</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #040814;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.07);
+            --glass-hover: rgba(255, 255, 255, 0.05);
+            --text-main: #F1F5F9;
+            --text-muted: #94A3B8;
+            --accent-teal: #4FD1C5;
+            --accent-blue: #3B82F6;
+            --accent-glow: rgba(79, 209, 197, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 3D Neural Canvas Container */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Layout Container */
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Glassmorphism base styling */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(79, 209, 197, 0.2);
+            box-shadow: 0 20px 50px rgba(79, 209, 197, 0.05);
+        }
+
+        /* --- 1. HERO SECTION --- */
+        .hero-section {
+            text-align: center;
+            margin-top: 2rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .quranic-verse {
+            font-family: 'Amiri', serif;
+            font-size: 2.8rem;
+            color: var(--accent-teal);
+            margin-bottom: 0.75rem;
+            text-shadow: 0 0 20px var(--accent-glow);
+            font-weight: 700;
+        }
+
+        .verse-translation {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            font-style: italic;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #FFF 30%, var(--accent-teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- 2. MAIN DASHBOARD GRID --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Clinical Reference Hub (Left Side) */
+        .reference-hub {
+            display: flex;
+            flex-direction: column;
+            height: 520px;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+
+        .tabs-nav::-webkit-scrollbar {
+            display: none; /* Hide scrollbar Chrome/Safari */
+        }
+
+        .tab-trigger {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-trigger.active, .tab-trigger:hover {
+            color: var(--accent-teal);
+            background: rgba(79, 209, 197, 0.08);
+        }
+
+        .tabs-content-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+            padding-right: 0.5rem;
+        }
+
+        /* Custom subtle scrollbar for content */
+        .tabs-content-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tabs-content-container::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+
+        .tab-pane {
+            display: none;
+            animation: paneFadeIn 0.4s ease forwards;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .med-heading {
+            color: var(--accent-teal);
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .med-subheading {
+            color: #FFF;
+            font-size: 0.95rem;
+            margin: 1rem 0 0.25rem 0;
+            font-weight: 600;
+        }
+
+        .medical-text {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .bullet-list {
+            list-style-type: none;
+            padding-left: 0.5rem;
+        }
+
+        .bullet-list li {
+            position: relative;
+            padding-left: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .bullet-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+
+        /* Study Timer & Audio Controls (Right Side) */
+        .utility-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .timer-box {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 2rem;
+        }
+
+        .timer-status {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-teal);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .timer-digits {
+            font-size: 4.5rem;
+            font-weight: 200;
+            letter-spacing: -1px;
+            color: #FFF;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+        }
+
+        .timer-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.65rem 1.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #FFF;
+            color: var(--primary-bg);
+            border-color: #FFF;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--accent-teal);
+            color: var(--primary-bg);
+            border-color: var(--accent-teal);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: #43b8ae;
+            border-color: #43b8ae;
+            box-shadow: 0 0 20px rgba(79, 209, 197, 0.3);
+        }
+
+        /* Soundboard */
+        .soundboard-box {
+            padding: 1.5rem;
+        }
+
+        .soundboard-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .sound-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .sound-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--glass-border);
+            padding: 0.75rem 1rem;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .sound-row:hover {
+            background: var(--glass-hover);
+        }
+
+        .sound-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .sound-toggle {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .sound-toggle.playing {
+            background: var(--accent-blue);
+            color: #FFF;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* --- 3. SYNAPSE CONNECTION SECTION --- */
+        .support-panel {
+            text-align: center;
+            max-width: 850px;
+            margin: 2rem auto 0 auto;
+            position: relative;
+        }
+
+        .support-msg {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-style: italic;
+            font-weight: 300;
+        }
+
+        .fuel-trigger {
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+            color: #FFF;
+            border: none;
+            padding: 0.9rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .fuel-trigger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .voucher-drop {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 0px;
+        }
+
+        .voucher-drop.active {
+            max-height: 250px;
+            opacity: 1;
+            margin-top: 2rem;
+        }
+
+        .voucher-card {
+            background: linear-gradient(135deg, rgba(79, 209, 197, 0.07) 0%, rgba(59, 130, 246, 0.07) 100%);
+            border: 1px dashed rgba(79, 209, 197, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: inline-block;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        /* Keyframes */
+        @keyframes paneFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .reference-hub {
+                height: 480px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .wrapper { padding: 1rem; }
+            .quranic-verse { font-size: 1.8rem; }
+            .main-title { font-size: 1.8rem; }
+            .timer-digits { font-size: 3.5rem; }
+            .glass-panel { padding: 1.5rem; }
+            .tabs-nav { gap: 0.25rem; }
+            .tab-trigger { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="wrapper">
+        
+        <header class="hero-section">
+            <div class="quranic-verse">رَّبِّ زِدْنِي عِلْمًا</div>
+            <p class="verse-translation">"My Lord, increase me in knowledge" — Surah Taha 20:114</p>
+            <h1 class="main-title">Neuroscience Hub</h1>
+        </header>
+
+        <div class="dashboard-grid">
+            
+            <section class="glass-panel reference-hub">
+                <nav class="tabs-nav" role="tablist">
+                    <button class="tab-trigger active" onclick="switchTab(event, 'neuro-anatomy')">Cortical Anatomy</button>
+                    <button class="tab-trigger" onclick="switchTab(event, 'stroke-syndromes')">Stroke Syndromes</button>
+                    <button class="tab-trigger" onclick="switchTab(event, 'spinal-tracts')">Spinal Pathways</button>
+                    <button class="tab-trigger" onclick="switchTab(event, 'clinical-exam')">Cranial Exam</button>
+                </nav>
+                
+                <div class="tabs-content-container">
+                    <div id="neuro-anatomy" class="tab-pane active">
+                        <h3 class="med-heading">🧠 Cerebral Hemispheres & Topography</h3>
+                        <p class="medical-text">High-yield functional localization profiles for rapid clinical diagnosis mapping:</p>
+                        
+                        <h4 class="med-subheading">Frontal Lobe</h4>
+                        <ul class="bullet-list">
+                            <li><strong>Primary Motor Cortex (Precentral Gyrus):</strong> Somatotopic motor map (homunculus).</li>
+                            <li><strong>Broca’s Area (Inferior Frontal Gyrus - Pars Opercularis/Triangularis):</strong> Motor speech production. Lesion causes expressive non-fluent aphasia.</li>
+                            <li><strong>Prefrontal Cortex:</strong> Executive function, judgment, working memory.</li>
+                        </ul>
+
+                        <h4 class="med-subheading">Temporal Lobe</h4>
+                        <ul class="bullet-list">
+                            <li><strong>Wernicke’s Area (Superior Temporal Gyrus posterior):</strong> Language comprehension. Lesion causes receptive fluent aphasia ("word salad").</li>
+                            <li><strong>Hippocampus & Amygdala:</strong> Consolidation of long-term anterograde memories and emotional processing.</li>
+                        </ul>
+
+                        <h4 class="med-subheading">Parietal & Occipital Lobes</h4>
+                        <ul class="bullet-list">
+                            <li><strong>Primary Somatosensory Cortex (Postcentral Gyrus):</strong> Tactile, proprioceptive sensation processing.</li>
+                            <li><strong>Occipital Cortex (Calcarine Sulcus):</strong> Primary visual processing (V1). Geniculocalcarine tract terminates here.</li>
+                        </ul>
+                    </div>
+
+                    <div id="stroke-syndromes" class="tab-pane">
+                        <h3 class="med-heading">⚡ Cerebrovascular Occlusion & Syndromes</h3>
+                        <p class="medical-text">Vascular territory mapping rules used during acute ischemic stroke assessments:</p>
+                        
+                        <h4 class="med-subheading">Middle Cerebral Artery (MCA) Occlusion</h4>
+                        <ul class="bullet-list">
+                            <li>Contralateral hemiparesis and hemisensory loss affecting predominantly the <strong>face and upper extremity</strong>.</li>
+                            <li>Gaze deviation pointing <em>towards</em> the side of the cortical lesion.</li>
+                            <li>Dominant hemisphere involvement results in global/Broca/Wernicke aphasias. Non-dominant involvement causes hemispatial neglect.</li>
+                        </ul>
+
+                        <h4 class="med-subheading">Anterior Cerebral Artery (ACA) Occlusion</h4>
+                        <ul class="bullet-list">
+                            <li>Contralateral motor and sensory deficits affecting predominantly the <strong>lower extremity</strong> (leg/foot homunculus map).</li>
+                            <li>Abulia (delayed responses, lack of willpower) due to frontal lobe parameter damage.</li>
+                        </ul>
+
+                        <h4 class="med-subheading">Posterior Cerebral Artery (PCA) Occlusion</h4>
+                        <ul class="bullet-list">
+                            <li>Contralateral homonymous hemianopia with <strong>macular sparing</strong> (due to collateral MCA circulation to the macular occipital pole).</li>
+                            <li>Thalamic infarct presentation: Contralateral pure sensory loss.</li>
+                        </ul>
+                    </div>
+
+                    <div id="spinal-tracts" class="tab-pane">
+                        <h3 class="med-heading">🧬 Ascending & Descending Spinal Tracts</h3>
+                        <p class="medical-text">Crucial pathways for localizing traumatic spinal lesions and Brown-Séquard presentation:</p>
+                        
+                        <h4 class="med-subheading">Lateral Corticospinal Tract (Descending Motor)</h4>
+                        <ul class="bullet-list">
+                            <li><strong>Function:</strong> Voluntary fine-motor movement of ipsilateral limbs.</li>
+                            <li><strong>Decussation:</strong> Pyramidal decussation inside the lower medulla.</li>
+                            <li><strong>Lesion:</strong> Upper Motor Neuron (UMN) signs below lesion level (Spasticity, Hyperreflexia, Babinski (+)).</li>
+                        </ul>
+
+                        <h4 class="med-subheading">Dorsal Column-Medial Lemniscal Pathway (Ascending)</h4>
+                        <ul class="bullet-list">
+                            <li><strong>Function:</strong> Fine touch, vibration sense, conscious proprioception.</li>
+                            <li><strong>Decussation:</strong> Internal arcuate fibers within the lower medulla.</li>
+                            <li><strong>Anatomy:</strong> Fasciculus Gracilis (lower body T6 and below), Fasciculus Cuneatus (upper body limbs above T6).</li>
+                        </ul>
+
+                        <h4 class="med-subheading">Spinothalamic Tract (Ascending Sensory)</h4>
+                        <ul class="bullet-list">
+                            <li><strong>Function:</strong> Pain, thermal temperature perception.</li>
+                            <li><strong>Decussation:</strong> Anterior white commissure of spinal cord (crosses 1-2 segments above entry level).</li>
+                        </ul>
+                    </div>
+
+                    <div id="clinical-exam" class="tab-pane">
+                        <h3 class="med-heading">👁️ Objective Cranial Nerve (CN) Testing</h3>
+                        <p class="medical-text">Standard bedside evaluation breakdown for emergency neurologic localizing:</p>
+                        
+                        <h4 class="med-subheading">Oculomotor Complex (CN III, IV, VI)</h4>
+                        <ul class="bullet-list">
+                            <li><strong>CN III:</strong> Controls SR, IR, MR, IO muscles, levator palpebrae, and pupillary constriction. Deficit shows "down and out" eye with severe ptosis.</li>
+                            <li><strong>CN IV (Trochlear):</strong> Controls Superior Oblique. Deficit causes vertical diplopia worsening on downward gaze (difficulty walking down stairs).</li>
+                            <li><strong>CN VI (Abducens):</strong> Controls Lateral Rectus. Deficit causes inward convergent strabismus and horizontal diplopia.</li>
+                        </ul>
+
+                        <h4 class="med-subheading">Trigeminal & Facial Complex (CN V & VII)</h4>
+                        <ul class="bullet-list">
+                            <li><strong>CN V Assessment:</strong> Corneal reflex afferent limb (V1), facial touch sensation mapping, jaw clenching strength.</li>
+                            <li><strong>CN VII Assessment:</strong> Corneal reflex efferent limb. Muscles of facial expression. Lower motor neuron lesion (Bell's Palsy) affects whole half of face; Upper motor neuron lesion spares the forehead due to bilateral cortical innervations.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="utility-sidebar">
+                
+                <section class="glass-panel timer-box">
+                    <div class="timer-status" id="timer-label">Focus Session</div>
+                    <div class="timer-digits" id="timer-clock">25:00</div>
+                    <div class="timer-actions">
+                        <button class="btn btn-primary" id="btn-start" onclick="toggleTimerClock()">Start</button>
+                        <button class="btn" onclick="resetTimerClock()">Reset</button>
+                        <button class="btn" id="btn-mode" onclick="toggleTimerMode()">Break</button>
+                    </div>
+                </section>
+
+                <section class="glass-panel soundboard-box">
+                    <div class="soundboard-title">Focus Soundscapes</div>
+                    <div class="sound-grid">
+                        
+                        <div class="sound-row">
+                            <div class="sound-info"><span>🌧️</span> White Noise Rain</div>
+                            <button class="sound-toggle" onclick="toggleSoundscape('rain', this, 'https://assets.mixkit.co/active_storage/sfx/2433/2433-84.wav')">▶</button>
+                        </div>
+
+                        <div class="sound-row">
+                            <div class="sound-info"><span>☕</span> Study Lounge Lofi</div>
+                            <button class="sound-toggle" onclick="toggleSoundscape('lofi', this, 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')">▶</button>
+                        </div>
+
+                        <div class="sound-row">
+                            <div class="sound-info"><span>🌊</span> Binaural Alpha Waves</div>
+                            <button class="sound-toggle" onclick="toggleSoundscape('waves', this, 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav')">▶</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <section class="glass-panel support-panel">
+            <p class="support-msg">
+                "I don't need to see a face to appreciate the beauty of a brilliant mind. This space is built entirely to ease your long nights of studying. Your hard work inspires me."
+            </p>
+            <button class="fuel-trigger" onclick="toggleVoucherCard()">☕ Send Virtual Fuel</button>
+            
+            <div class="voucher-drop" id="voucher-drop-zone">
+                <div class="voucher-card">
+                    <h4 style="color: var(--accent-teal); margin-bottom: 0.25rem; font-weight:600;">Care Package Activated</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height:1.5;">This acts as a digital promise note for a hot premium espresso or midnight study snack delivery anytime you need it. Keep pushing forward, Future Neurologist.</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        /* =========================================
+           A. 3D INTERACTIVE SYNAPSE BACKDROP (THREE.JS)
+           ========================================= */
+        const canvasContainer = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        
+        // Anti-aliased premium rendering configuration
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 120;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Lock performance for retina displays
+        canvasContainer.appendChild(renderer.domElement);
+
+        // Generation Parameters for Neural Connections Array
+        const particleCount = window.innerWidth < 600 ? 60 : 130; // Scale points dynamically to protect mobile CPU/GPU
+        const particleGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const dynamicVectors = [];
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 250;     // X Space
+            positions[i + 1] = (Math.random() - 0.5) * 250; // Y Space
+            positions[i + 2] = (Math.random() - 0.5) * 150; // Z Space
+            
+            dynamicVectors.push({
+                x: (Math.random() - 0.5) * 0.12,
+                y: (Math.random() - 0.5) * 0.12,
+                z: (Math.random() - 0.5) * 0.12
+            });
+        }
+
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        // Soft glowing point map representation for Neurons
+        const particleMat = new THREE.PointsMaterial({
+            color: 0x4FD1C5,
+            size: window.innerWidth < 600 ? 2.0 : 1.5,
+            transparent: true,
+            opacity: 0.75,
+            blending: THREE.AdditiveBlending
+        });
+
+        const neuralNetworkPoints = new THREE.Points(particleGeo, particleMat);
+        scene.add(neuralNetworkPoints);
+
+        // Smooth Mouse Interactivity Interpolation Variables
+        let clientTargetX = 0;
+        let clientTargetY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            clientTargetX = (e.clientX - window.innerWidth / 2) * 0.03;
+            clientTargetY = (e.clientY - window.innerHeight / 2) * 0.03;
+        });
+
+        // Frame rendering processing engine loop
+        function executeNeuralRender() {
+            requestAnimationFrame(executeNeuralRender);
+
+            // Ease transition updates for absolute zero stutter experience
+            camera.position.x += (clientTargetX - camera.position.x) * 0.05;
+            camera.position.y += (-clientTargetY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+
+            const activeCoords = neuralNetworkPoints.geometry.attributes.position.array;
+            
+            for (let i = 0; i < particleCount; i++) {
+                activeCoords[i * 3] += dynamicVectors[i].x;
+                activeCoords[i * 3 + 1] += dynamicVectors[i].y;
+                activeCoords[i * 3 + 2] += dynamicVectors[i].z;
+
+                // Boundary containment matrix limits check
+                if (Math.abs(activeCoords[i * 3]) > 130) dynamicVectors[i].x *= -1;
+                if (Math.abs(activeCoords[i * 3 + 1]) > 130) dynamicVectors[i].y *= -1;
+                if (Math.abs(activeCoords[i * 3 + 2]) > 80) dynamicVectors[i].z *= -1;
+            }
+            neuralNetworkPoints.geometry.attributes.position.needsUpdate = true;
+            neuralNetworkPoints.rotation.y += 0.0008; // Continuous ambient drifting spin
+
+            renderer.render(scene, camera);
+        }
+        executeNeuralRender();
+
+        // Flawless Resize Adaptation Engine
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+
+        /* =========================================
+           B. CLINICAL TAB PRESENTATION ENGINE
+           ========================================= */
+        function switchTab(event, targetTabId) {
+            const contextContainer = event.currentTarget.closest('.reference-hub');
+            
+            contextContainer.querySelectorAll('.tab-trigger').forEach(btn => btn.classList.remove('active'));
+            contextContainer.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(targetTabId).classList.add('active');
+            
+            // Auto scroll contents pane to absolute top upon change
+            contextContainer.querySelector('.tabs-content-container').scrollTop = 0;
+        }
+
+
+        /* =========================================
+           C. STABLE POMODORO TIMER MECHANISM
+           ========================================= */
+        let remainingDuration = 25 * 60;
+        let clockRunningInterval = null;
+        let sessionIsStudyState = true;
+
+        const clockDisplayNode = document.getElementById('timer-clock');
+        const actionButtonNode = document.getElementById('btn-start');
+        const contextModeButtonNode = document.getElementById('btn-mode');
+        const stateLabelNode = document.getElementById('timer-label');
+
+        function refreshClockUI() {
+            const calculatedMins = Math.floor(remainingDuration / 60);
+            const calculatedSecs = remainingDuration % 60;
+            clockDisplayNode.textContent = `${calculatedMins.toString().padStart(2, '0')}:${calculatedSecs.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimerClock() {
+            if (clockRunningInterval) {
+                clearInterval(clockRunningInterval);
+                clockRunningInterval = null;
+                actionButtonNode.textContent = 'Start';
+            } else {
+                actionButtonNode.textContent = 'Pause';
+                clockRunningInterval = setInterval(() => {
+                    if (remainingDuration > 0) {
+                        remainingDuration--;
+                        refreshClockUI();
+                    } else {
+                        clearInterval(clockRunningInterval);
+                        clockRunningInterval = null;
+                        sessionIsStudyState = !sessionIsStudyState;
+                        autoConfigureTimerState();
+                        alert(sessionIsStudyState ? "Break block concluded. Ready to initialize focus sequence?" : "Focus system complete. Step away from the screen.");
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimerClock() {
+            if (clockRunningInterval) {
+                clearInterval(clockRunningInterval);
+                clockRunningInterval = null;
+            }
+            actionButtonNode.textContent = 'Start';
+            remainingDuration = sessionIsStudyState ? 25 * 60 : 5 * 60;
+            refreshClockUI();
+        }
+
+        function toggleTimerMode() {
+            sessionIsStudyState = !sessionIsStudyState;
+            autoConfigureTimerState();
+        }
+
+        function autoConfigureTimerState() {
+            contextModeButtonNode.textContent = sessionIsStudyState ? 'Break' : 'Focus';
+            stateLabelNode.textContent = sessionIsStudyState ? 'Focus Session' : 'Resting Phase';
+            resetTimerClock();
+        }
+
+
+        /* =========================================
+           D. CLEAN MULTI-AUDIO FOCUS ENVIRONMENT
+           ========================================= */
+        const runtimeAudioObjectsMap = {};
+
+        function toggleSoundscape(audioKey, buttonElement, streamUrl) {
+            // Instantiate instance only upon absolute requirement click
+            if (!runtimeAudioObjectsMap[audioKey]) {
+                runtimeAudioObjectsMap[audioKey] = new Audio(streamUrl);
+                runtimeAudioObjectsMap[audioKey].loop = true;
+            }
+
+            const targetAudioNode = runtimeAudioObjectsMap[audioKey];
+
+            if (targetAudioNode.paused) {
+                // Terminate other playing focus media streams if desired to keep space clear
+                Object.keys(runtimeAudioObjectsMap).forEach(key => {
+                    if (key !== audioKey) {
+                        runtimeAudioObjectsMap[key].pause();
+                        const trackingBtn = document.querySelector(`button[onclick*="'${key}'"]`);
+                        if(trackingBtn) {
+                            trackingBtn.classList.remove('playing');
+                            trackingBtn.textContent = '▶';
+                        }
+                    }
+                });
+
+                targetAudioNode.play().catch(() => {
+                    console.log("Browser stream policy blocked audio initialization until global view interaction.");
+                });
+                buttonElement.classList.add('playing');
+                buttonElement.textContent = '⏸';
+            } else {
+                targetAudioNode.pause();
+                buttonElement.classList.remove('playing');
+                buttonElement.textContent = '▶';
+            }
+        }
+
+
+        /* =========================================
+           E. VOUCHER SELECTION DRAWER INTERACTION
+           ========================================= */
+        function toggleVoucherCard() {
+            const animationDrawer = document.getElementById('voucher-drop-zone');
+            animationDrawer.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
